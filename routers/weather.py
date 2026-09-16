@@ -28,3 +28,17 @@ async def test(appid: str, area: str):
     except Exception:
         raise HTTPException(status_code=404, detail="API KEY 또는 요청 URL을 확인해주세요.")
 
+
+# 지역 좌표 검색 API
+@router.get("/area")
+async def area(appid: str, area: str):
+    try:
+        url = f"https://api.openweathermap.org/geo/1.0/direct?q={area}&limit=1&appid={appid}"
+        response = await http_client.client.get(url)
+
+        import json
+        return {
+            "response": json.load(response)
+        }
+    except Exception:
+        raise HTTPException(status_code=404, detail="API KEY 또는 요청 URL을 확인해주세요.")
