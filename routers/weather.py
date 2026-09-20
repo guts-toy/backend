@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from core.clients import http_client
+from datetime import datetime, timezone, timedelta
 import json
 
 # Weather API
@@ -20,10 +21,21 @@ async def test(appid: str, area: str):
 
         url = f"https://api.openweathermap.org/data/2.5/weather?q={area}&APPID={appid}&lang=kr&units=metric"
         response = await http_client.client.get(url)
+        response_json = json.load(response)
 
-        import json
+        # 한국 시간대(UTC+9) 정의
+        KST = timezone(timedelta(hours=9))
+
+        # KST 기준으로 날씨 형식 수정
+        sunrise = datetime.fromtimestamp(response_json.get('sys').get('sunrise'), tz = KST).strftime('%X')
+        sunset  = datetime.fromtimestamp(response_json.get('sys').get('sunset'), tz = KST).strftime('%X')
+
+        # 날씨 데이터 업데이트
+        response_json.get('sys').update({'sunrise': sunrise})
+        response_json.get('sys').update({'sunset': sunset})
+
         return {
-            "response": json.load(response)
+            "response": response_json
         }
     except Exception:
         raise HTTPException(status_code=404, detail="API KEY 또는 요청 URL을 확인해주세요.")
@@ -42,3 +54,4 @@ async def area(appid: str, area: str):
         }
     except Exception:
         raise HTTPException(status_code=404, detail="API KEY 또는 요청 URL을 확인해주세요.")
+
